@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Adaptive-icon safe-zone version of Keyhole Door. -->
+  <rect x="336" y="270" width="352" height="522" rx="68" fill="none" stroke="#F5F1E8" stroke-width="30"/>
+  <path d="M610 300V762" fill="none" stroke="#F5F1E8" stroke-width="21" stroke-linecap="round"/>
+  <path d="M570 462V532" fill="none" stroke="#67D8C4" stroke-width="24" stroke-linecap="round"/>
+  <circle cx="470" cy="498" r="42" fill="#67D8C4"/>
+  <path d="M445 529H495L511 632H429Z" fill="#67D8C4"/>
+</svg>

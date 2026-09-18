@@ -1,0 +1,35 @@
+# Secrets and local/private material
+credentials.json
+*.credentials.json
+.serena/
+sources/
+resources/
+REVERSE-ENGINEERING.md
+
+# Python
+**/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# uv lockfile (script project, not a library)
+uv.lock
+
+# IDE / local tooling
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+*.tmp
+*.swp
+*.swo
+*~

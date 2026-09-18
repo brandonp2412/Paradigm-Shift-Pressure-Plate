@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Keyhole Door: a quiet, single-locker security mark. -->
+  <rect width="1024" height="1024" rx="224" fill="#0E1B2A"/>
+
+  <!-- Locker door -->
+  <rect x="286" y="174" width="452" height="676" rx="88" fill="none" stroke="#F5F1E8" stroke-width="34"/>
+
+  <!-- Door edge and handle -->
+  <path d="M638 208V816" fill="none" stroke="#F5F1E8" stroke-width="24" stroke-linecap="round"/>
+  <path d="M585 422V514" fill="none" stroke="#67D8C4" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Keyhole cutout -->
+  <circle cx="470" cy="468" r="54" fill="#67D8C4"/>
+  <path d="M438 508H502L523 640H417Z" fill="#67D8C4"/>
+</svg>

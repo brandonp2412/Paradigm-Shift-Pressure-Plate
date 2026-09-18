@@ -1,0 +1,39 @@
+name: floorsense_app
+description: "FloorSense Locker Manager"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  talker_flutter: 5.1.16
+  cupertino_icons: ^1.0.8
+  http: ^1.2.0
+  web_socket_channel: ^3.0.0
+  shared_preferences: ^2.3.0
+  flutter_secure_storage: ^9.2.2
+  provider: ^6.1.0
+  webview_flutter: ^4.10.0
+  crypto: ^3.0.3
+  workmanager: ^0.9.0+3
+  flutter_local_notifications: ^18.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#0E1B2A"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  remove_alpha_ios: true
+
+flutter:
+  uses-material-design: true
