@@ -9,12 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  talker_flutter: 5.1.16
+  talker_flutter: ^5.1.20
   cupertino_icons: ^1.0.8
   http: ^1.2.0
   web_socket_channel: ^3.0.0
   shared_preferences: ^2.3.0
-  flutter_secure_storage: ^9.2.2
+  flutter_secure_storage: ^11.2.0
   provider: ^6.1.0
   webview_flutter: ^4.10.0
   crypto: ^3.0.3
