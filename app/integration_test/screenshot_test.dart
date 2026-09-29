@@ -2,6 +2,7 @@ import 'package:floorsense_app/models/available_locker.dart';
 import 'package:floorsense_app/models/locker_reservation.dart';
 import 'package:floorsense_app/widgets/locker_tile.dart';
 import 'package:floorsense_app/widgets/reservation_card.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -219,6 +220,13 @@ Future<void> _capture(
     ),
   );
   await tester.pumpAndSettle();
+
+  expect(find.byType(Scaffold), findsOneWidget);
+
+  final supportsScreenshotCapture =
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+  if (!supportsScreenshotCapture) return;
 
   await binding.convertFlutterSurfaceToImage();
   await tester.pumpAndSettle();
