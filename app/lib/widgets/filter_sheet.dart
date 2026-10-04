@@ -32,6 +32,7 @@ class _FilterSheetState extends State<FilterSheet> {
   }
 
   Future<void> _toggleWatch(bool value) async {
+    final previous = _watchEnabled;
     setState(() {
       _watchEnabled = value;
       _watchBusy = true;
@@ -41,6 +42,13 @@ class _FilterSheetState extends State<FilterSheet> {
         await BackgroundWatch.enable();
       } else {
         await BackgroundWatch.disable();
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() => _watchEnabled = previous);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update locker alerts: $error')),
+        );
       }
     } finally {
       if (mounted) setState(() => _watchBusy = false);

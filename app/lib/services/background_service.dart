@@ -5,9 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../models/bank.dart';
-import '../models/controller.dart';
 import '../models/locker_section.dart';
-import 'websocket_service.dart';
+import 'auth_service.dart';
 import '../logging.dart';
 
 /// Background watcher: periodically checks whether any of the locker banks the
@@ -61,15 +60,29 @@ class BackgroundWatch {
   static Future<void> enable() async {
     talker.info('Enabling background locker watch');
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(enabledKey, true);
-    await _requestPermission();
-    await Workmanager().registerPeriodicTask(
-      _uniqueName,
-      taskName,
-      frequency: const Duration(minutes: 15),
-      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-      constraints: Constraints(networkType: NetworkType.connected),
-    );
+    final permissionGranted = await _requestPermission();
+    if (!permissionGranted) {
+      await Workmanager().cancelByUniqueName(_uniqueName);
+      await prefs.setBool(enabledKey, false);
+      throw StateError('Notification permission is disabled');
+    }
+
+    try {
+      await Workmanager().registerPeriodicTask(
+        _uniqueName,
+        taskName,
+        frequency: const Duration(minutes: 15),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+        constraints: Constraints(networkType: NetworkType.connected),
+      );
+      // Only report the feature as enabled once both notification permission
+      // and periodic work registration have succeeded.
+      await prefs.setBool(enabledKey, true);
+    } catch (_) {
+      await Workmanager().cancelByUniqueName(_uniqueName);
+      await prefs.setBool(enabledKey, false);
+      rethrow;
+    }
   }
 
   /// Turn watching off and cancel the periodic task.
@@ -93,17 +106,32 @@ class BackgroundWatch {
     }
   }
 
-  static Future<void> _requestPermission() async {
+  static Future<bool> _requestPermission() async {
     final android = notifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-    await android?.requestNotificationsPermission();
+    if (android != null) {
+      // Android versions before runtime notification permission may return
+      // null; notifications are allowed there unless disabled in system
+      // settings, so preserve the pre-Android-13 behaviour.
+      return await android.requestNotificationsPermission() ?? true;
+    }
+
     final ios = notifications
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >();
-    await ios?.requestPermissions(alert: true, badge: true, sound: true);
+    if (ios != null) {
+      return await ios.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          ) ??
+          false;
+    }
+
+    return true;
   }
 
   /// Debug-only: run the *real* check immediately on the calling isolate,
@@ -128,45 +156,31 @@ class BackgroundWatch {
   ///
   /// [ignoreEnabled] bypasses the opt-in gate; used only by [debugForceCheck]
   /// so the debug trigger works regardless of the toggle state.
-  static Future<bool> runCheck({bool ignoreEnabled = false}) async {
+  static Future<bool> runCheck({
+    bool ignoreEnabled = false,
+    @visibleForTesting AuthService? authService,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     if (!ignoreEnabled && !(prefs.getBool(enabledKey) ?? false)) return true;
 
-    final sessionJson = prefs.getString(sessionKey);
-    if (sessionJson == null) return true;
-    talker.info('Running background locker availability check');
-
-    Controller controller;
-    String? ssoAccessToken;
-    String? ssoIdToken;
+    // Restore the session through AuthService instead of replaying the
+    // controller JWT stored in SharedPreferences. AuthService owns the complete
+    // session lifecycle, including password/SSO credential refresh and rotated
+    // SSO refresh-token persistence. Replaying the stored controller token here
+    // meant background checks stopped working as soon as that JWT expired even
+    // though opening the foreground app silently refreshed it.
+    final auth = authService ?? AuthService();
     try {
-      final data = jsonDecode(sessionJson) as Map<String, dynamic>;
-      final ctrlJson = data['controller'] as Map<String, dynamic>?;
-      if (ctrlJson == null) return true;
-      controller = Controller.fromJson(ctrlJson);
-      ssoAccessToken = data['sso_access_token'] as String?;
-      ssoIdToken = data['sso_id_token'] as String?;
-    } catch (error, stackTrace) {
-      talker.handle(
-        error,
-        stackTrace,
-        'Could not restore background watch session',
-      );
-      return true;
-    }
+      if (!await auth.tryRestoreSession()) {
+        talker.warning(
+          'Background locker check skipped: no restorable session',
+        );
+        return true;
+      }
 
-    final enabledCids = _readFilter(prefs);
-    final ws = WebSocketService();
-    try {
-      await ws.connect(
-        socketUri: controller.socketURI,
-        token: controller.token,
-        uid: controller.uid,
-        uidToken: controller.uidToken,
-        idToken: ssoIdToken,
-        accessToken: ssoAccessToken,
-      );
-
+      talker.info('Running background locker availability check');
+      final enabledCids = _readFilter(prefs);
+      final ws = auth.ws;
       final banks = await ws.getBankList();
       final watched = enabledCids.isEmpty
           ? banks
@@ -214,7 +228,7 @@ class BackgroundWatch {
       talker.handle(error, stackTrace, 'Background locker check failed');
       return false;
     } finally {
-      ws.dispose();
+      auth.dispose();
     }
   }
 
